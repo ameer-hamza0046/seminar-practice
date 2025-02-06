@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "bpf_helpers.h": "c",
-        "if_link.h": "c"
+        "if_link.h": "c",
+        "icmpv6.h": "c",
+        "bpf.h": "c",
+        "xsk.h": "c",
+        "common_params.h": "c"
     }
 }
