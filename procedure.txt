@@ -1,0 +1,5 @@
+* mmap umem
+* xsk_confgure_mem
+* fill ring , xsk_populate
+* configure socket
+* link the umem
