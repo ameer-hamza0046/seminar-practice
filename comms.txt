@@ -1,0 +1,15 @@
+bpftool prog load [name].bpf.o /sys/fs/bpf/[name]
+bpftool prog attach name [name] kprobe sys_getdents64
+
+
+bpftool net attach xdp [identify the program] dev wlo1
+bpftool net detach xdp dev wlo1
+
+
+/sys/fs/bpf
+
+/sys/kernel/debug/tracing/trace_pipe
+
+ip link set dev wlo1 xdp obj hello.bpf.o sec xdp
+ip link set dev wlo1 xdp off
+ip -details link show dev wlo1

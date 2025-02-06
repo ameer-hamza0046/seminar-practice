@@ -1,0 +1,35 @@
+# hello.bpf.o: %.o: %.c
+# 	clang -I/usr/src/linux-headers-6.8.0-49-generic/tools/bpf/resolve_btfids/libbpf/include/ \
+# 	-target bpf \
+# 	-I/usr/include/$(shell uname -m)-linux-gnu \
+# 	-g \
+# 	-O2 -c $< -o $@
+
+# count_exec.bpf.o: %.o: %.c
+# 	clang -I/usr/src/linux-headers-6.8.0-49-generic/tools/bpf/resolve_btfids/libbpf/include/ \
+# 	-target bpf \
+# 	-I/usr/include/$(shell uname -m)-linux-gnu \
+# 	-g \
+# 	-O2 -c $< -o $@
+
+all: helloXDP.bpf.o helloAF_XDP.o pingXDP.bpf.o
+
+pingXDP.bpf.o: %.o: %.c
+	clang -I/usr/src/linux-headers-6.8.0-49-generic/tools/bpf/resolve_btfids/libbpf/include/ \
+	-target bpf \
+	-I/usr/include/$(shell uname -m)-linux-gnu \
+	-g \
+	-O2 -c $< -o $@
+
+helloXDP.bpf.o: %.o: %.c
+	clang -I/usr/src/linux-headers-6.8.0-49-generic/tools/bpf/resolve_btfids/libbpf/include/ \
+	-target bpf \
+	-I/usr/include/$(shell uname -m)-linux-gnu \
+	-g \
+	-O2 -c $< -o $@
+
+helloAF_XDP.o: helloAF_XDP.c
+	gcc -o helloAF_XDP.o helloAF_XDP.c
+
+clean:
+	rm *.o
