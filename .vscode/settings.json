@@ -5,6 +5,25 @@
         "icmpv6.h": "c",
         "bpf.h": "c",
         "xsk.h": "c",
-        "common_params.h": "c"
+        "common_params.h": "c",
+        "unistd.h": "c",
+        "libxdp.h": "c",
+        "common_libbpf.h": "c",
+        "common_defines.h": "c",
+        "common_user_bpf_xdp.h": "c",
+        "params.h": "c",
+        "err.h": "c",
+        "netdev.h": "c",
+        "libbpf.h": "c",
+        "if_ether.h": "c",
+        "getopt.h": "c",
+        "logging.h": "c",
+        "util.h": "c",
+        "common_kern_user.h": "c",
+        "pthread.h": "c",
+        "inet.h": "c",
+        "ipv6.h": "c",
+        "cerrno": "c",
+        "cstdlib": "c"
     }
 }

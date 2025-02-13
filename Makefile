@@ -1,16 +1,18 @@
-NAME = xdp_redirect
+NAME = hello_af_xdp_kern
+DEV = wlo1
+USERPROG = hello_af_xdp
+
+# -I/usr/include/$(shell uname -m)-linux-gnu \
 
 $(NAME).bpf.o: %.o: %.c
-	clang -I/usr/src/linux-headers-6.8.0-49-generic/tools/bpf/resolve_btfids/libbpf/include/ \
-	-target bpf \
-	-I/usr/include/$(shell uname -m)-linux-gnu \
+	clang -target bpf \
 	-g \
 	-O2 -c $< -o $@
-	ip link set dev wlo1 xdp obj $(NAME).bpf.o sec xdp
+	ip link set dev $(DEV) xdp obj $(NAME).bpf.o sec xdp
 
-helloAF_XDP.o: helloAF_XDP.c
-	gcc helloAF_XDP.c -o helloAF_XDP.o
+$(USERPROG).o: $(USERPROG).c
+	clang $(USERPROG).c -o $(USERPROG).o -lxdp
 
 clean:
-	ip link set dev wlo1 xdp off
+	ip link set dev $(DEV) xdp off
 	rm *.o
