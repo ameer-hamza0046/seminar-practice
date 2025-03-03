@@ -92,17 +92,7 @@ static void handle_receive_packets() {
 }
 
 static void rx_and_process() {
-  struct pollfd fds[2];
-  int ret, nfds = 1;
-
-  memset(fds, 0, sizeof(fds));
-  fds[0].fd = xsk_socket__fd(xsk);
-  fds[0].events = POLLIN;
-
   while (1) {
-    ret = poll(fds, nfds, -1);
-    if (ret <= 0)
-      continue;
     handle_receive_packets();
   }
 }
