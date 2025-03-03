@@ -17,7 +17,7 @@
 #define INVALID_UMEM_FRAME UINT64_MAX
 #define IF_NAMESIZE 12
 
-const char* if_name = "lo";
+const char* if_name = "wlo1";
 
 struct xsk_umem_info {
 	struct xsk_ring_prod fq;
