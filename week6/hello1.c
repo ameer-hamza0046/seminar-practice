@@ -37,8 +37,8 @@ struct xsk_ring_cons rx;
 struct xsk_ring_prod tx;
 struct xsk_socket_config config;
 
-// VARS
-uint32_t ret, stock_frames, idx;
+// STATS
+uint64_t received_bytes = 0, received_packets = 0;
 
 // FUNCTIONS
 uint64_t get_frame_addr() {
@@ -53,6 +53,62 @@ uint64_t get_frame_addr() {
   return frame;
 }
 
+static void handle_receive_packets() {
+  uint32_t rcvd, stock_frames, idx_rx, idx_fq, ret;
+  rcvd = xsk_ring_cons__peek(&rx, RX_BATCH_SIZE, &idx_rx);
+  if (!rcvd)
+    return;
+
+  // free up the fill_queue frames
+  stock_frames = xsk_prod_nb_free(&fill, umem_frame_free);
+  if (stock_frames > 0) {
+    ret = xsk_ring_prod__reserve(&fill, stock_frames, &idx_fq);
+    while (ret != stock_frames) {
+      ret = xsk_ring_prod__reserve(&fill, stock_frames, &fill);
+    }
+
+    for (int i = 0; i < stock_frames; i++) {
+      *xsk_ring_prod__fill_addr(&fill, idx_fq++) = get_frame_addr();
+    }
+    xsk_ring_prod__submit(&fill, stock_frames);
+  }
+
+  // packet processing
+  for (int i = 0; i < rcvd; i++) {
+    struct xdp_desc *desc;
+    desc = xsk_ring_cons__rx_desc(&rx, idx_rx++);
+
+    uint64_t addr = desc->addr;
+    uint32_t len = desc->len;
+
+    // free the umem frame
+    assert(umem_frame_free < NUM_FRAMES);
+    umem_frame_addr[umem_frame_free++] = addr;
+
+    received_bytes += len;
+    received_packets += 1;
+  }
+  xsk_ring_cons__release(&rx, rcvd);
+  printf("Received Packets: %lu, Bytes: %lu\n", received_packets,
+         received_bytes);
+}
+
+static void rx_and_process() {
+  struct pollfd fds[2];
+  int ret, nfds = 1;
+
+  memset(fds, 0, sizeof(fds));
+  fds[0].fd = xsk_socket__fd(xsk);
+  fds[0].events = POLLIN;
+
+  while (1) {
+    ret = poll(fds, nfds, -1);
+    if (ret <= 0)
+      continue;
+    handle_receive_packets();
+  }
+}
+
 int main() {
   // handle SIGINT
   signal(SIGINT, handle_sigint);
@@ -63,6 +119,10 @@ int main() {
     perror("posix_memalign");
     exit(EXIT_FAILURE);
   }
+  for (int i = 0; i < NUM_FRAMES; i++) {
+    umem_frame_addr[i] = i * FRAME_SIZE;
+  }
+  umem_frame_free = NUM_FRAMES;
 
   // Configure UMEM
   if (xsk_umem__create(&umem, umem_area, size, &fill, &comp, NULL)) {
@@ -82,16 +142,12 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  // Initialize umem_frames
-  for (int i = 0; i < NUM_FRAMES; i++) {
-    umem_frame_addr[i] = i * FRAME_SIZE;
-  }
-  umem_frame_free = NUM_FRAMES;
-
+  // Reserve frames in fill_queue
+  // And add addresses in it
+  uint32_t ret, stock_frames, idx;
   idx = 0;
   stock_frames = xsk_prod_nb_free(&fill, umem_frame_free);
   ret = xsk_ring_prod__reserve(&fill, stock_frames, &idx);
-  printf("stock: %d, reserved: %u\n", stock_frames, ret);
   if (ret != stock_frames) {
     perror("xsk_ring_prod__reserve");
     exit(EXIT_FAILURE);
@@ -102,29 +158,7 @@ int main() {
   }
   xsk_ring_prod__submit(&fill, stock_frames);
 
-  // struct pollfd fds[2];
-  // int nfds = 1;
-  // memset(fds, 0, sizeof(fds));
-  // fds[0].fd = xsk_socket__fd(xsk);
-  // fds[0].events = POLLIN;
-
-  // while (1) {
-  //   ret = poll(fds, nfds, -1);
-  //   if (ret != 1)
-  //     continue;
-
-  //   uint32_t rcvd, idx_rx = 0, stock_frames, idx_fill = 0;
-  //   rcvd = xsk_ring_cons__peek(&rx, RX_BATCH_SIZE, &idx_rx);
-  //   if (!rcvd)
-  //     continue;
-
-  //   stock_frames = xsk_prod_nb_free(&fill, umem_frame_free);
-  //   if (stock_frames > 0) {
-  //     while (ret != stock_frames) {
-  //       ret = xsk_ring_prod__reserve(&fill, rcvd, &idx_fill);
-  //     }
-  //   }
-  // }
+  rx_and_process();
 
   printf("done\n");
   return 0;
