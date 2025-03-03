@@ -64,7 +64,7 @@ static void handle_receive_packets() {
   if (stock_frames > 0) {
     ret = xsk_ring_prod__reserve(&fill, stock_frames, &idx_fq);
     while (ret != stock_frames) {
-      ret = xsk_ring_prod__reserve(&fill, stock_frames, &fill);
+      ret = xsk_ring_prod__reserve(&fill, stock_frames, &idx_fq);
     }
 
     for (int i = 0; i < stock_frames; i++) {
@@ -75,11 +75,9 @@ static void handle_receive_packets() {
 
   // packet processing
   for (int i = 0; i < rcvd; i++) {
-    struct xdp_desc *desc;
-    desc = xsk_ring_cons__rx_desc(&rx, idx_rx++);
-
-    uint64_t addr = desc->addr;
-    uint32_t len = desc->len;
+    uint64_t addr = xsk_ring_cons__rx_desc(&rx, idx_rx)->addr;
+    uint32_t len = xsk_ring_cons__rx_desc(&rx, idx_rx)->len;
+    idx_rx++;
 
     // free the umem frame
     assert(umem_frame_free < NUM_FRAMES);

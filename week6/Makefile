@@ -1,6 +1,6 @@
 DEV1 = wlo1
 DEV2 = lo
-USERPROG = hello1
+USERPROG = hello
 CC = clang
 
 $(USERPROG).o: $(USERPROG).c
