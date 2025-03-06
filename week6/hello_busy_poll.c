@@ -131,7 +131,7 @@ int main() {
   // Configure Socket
   config.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
   config.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
-  config.xdp_flags = XDP_FLAGS_SKB_MODE;
+  config.xdp_flags = XDP_MODE_SKB;
   config.bind_flags = 0;
   config.libxdp_flags = 0;
 
